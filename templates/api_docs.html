@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Documentation API REST TubeStream Pro — Intégrez le téléchargement vidéo dans vos applications. Endpoints détaillés, exemples curl et réponses JSON.">
+    <title>API REST — TubeStream Pro Documentation</title>
+    <link rel="canonical" href="https://tubestream.app/api">
+    <meta name="robots" content="index, follow">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #09090b;
+            --bg-secondary: #18181b;
+            --bg-tertiary: #27272a;
+            --border: #3f3f46;
+            --accent: #8b5cf6;
+            --accent-light: #a78bfa;
+            --green: #10b981;
+            --red: #ef4444;
+            --orange: #f59e0b;
+            --blue: #3b82f6;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --code-bg: #1e1e22;
+            --radius: 12px;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        .nav {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+        }
+        .nav a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav a span {
+            background: linear-gradient(135deg, var(--accent), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .nav-back {
+            margin-left: auto;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            color: var(--text-secondary) !important;
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .nav-back:hover { color: var(--text-primary) !important; border-color: var(--accent); }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+        h1 {
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 18px;
+            margin-bottom: 40px;
+        }
+        .base-url {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 24px;
+            margin-bottom: 48px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .base-url label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .base-url code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            color: var(--accent-light);
+        }
+        .endpoint {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        .endpoint-header {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+        .endpoint-header:hover { background: var(--bg-tertiary); }
+        .method {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .method.post { background: rgba(16, 185, 129, 0.15); color: var(--green); }
+        .method.get { background: rgba(59, 130, 246, 0.15); color: var(--blue); }
+        .path {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .endpoint-title {
+            margin-left: auto;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .endpoint-body {
+            padding: 24px;
+            display: none;
+        }
+        .endpoint-body.open { display: block; }
+        .endpoint-body h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 20px 0 10px;
+            color: var(--text-secondary);
+        }
+        .endpoint-body h4:first-child { margin-top: 0; }
+        .endpoint-body p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+        .curl { color: var(--green); }
+        .json-key { color: var(--accent-light); }
+        .json-string { color: var(--orange); }
+        .json-number { color: var(--blue); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        th {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td code {
+            background: var(--bg-tertiary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .status-ok { color: var(--green); font-weight: 600; }
+        .status-err { color: var(--red); font-weight: 600; }
+        .try-it {
+            margin-top: 16px;
+            display: flex;
+            gap: 8px;
+        }
+        .try-it input {
+            flex: 1;
+            padding: 10px 14px;
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            outline: none;
+        }
+        .try-it input:focus { border-color: var(--accent); }
+        .try-it button {
+            padding: 10px 20px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s;
+        }
+        .try-it button:hover { background: var(--accent-dark, #7c3aed); }
+        .try-result {
+            margin-top: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="/"><span>▶ TubeStream Pro</span></a>
+        <a href="/" class="nav-back">← Retour au site</a>
+    </nav>
+
+    <div class="container">
+        <h1>📡 API REST Documentation</h1>
+        <p class="subtitle">Intégrez le téléchargement vidéo dans vos applications. Tous les endpoints retournent du JSON.</p>
+
+        <div class="base-url">
+            <label>Base URL</label>
+            <code id="baseUrl">https://tubestream.app/api/v1</code>
+        </div>
+
+        <!-- ====== ENDPOINT: INFO ====== -->
+        <div class="endpoint">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <span class="method post">POST</span>
+                <span class="path">/api/v1/info</span>
+                <span class="endpoint-title">Récupérer les métadonnées d'une vidéo</span>
+            </div>
+            <div class="endpoint-body">
+                <p>Récupère toutes les informations d'une vidéo ou playlist : titre, description, durée, thumbnail, et <strong>tous les formats disponibles avec leur taille exacte</strong>.</p>
+
+                <h4>Body (JSON)</h4>
+                <pre><code>{
+  <span class="json-key">"url"</span>: <span class="json-string">"https://www.youtube.com/watch?v=dQw4w9WgXcQ"</span>
+}</code></pre>
+
+                <h4>Réponse (200 OK)</h4>
+                <pre><code>{
+  <span class="json-key">"id"</span>: <span class="json-string">"dQw4w9WgXcQ"</span>,
+  <span class="json-key">"title"</span>: <span class="json-string">"Rick Astley - Never Gonna Give You Up"</span>,
+  <span class="json-key">"type"</span>: <span class="json-string">"video"</span>,
+  <span class="json-key">"duration"</span>: <span class="json-number">213</span>,
+  <span class="json-key">"duration_formatted"</span>: <span class="json-string">"3:33"</span>,
+  <span class="json-key">"thumbnail"</span>: <span class="json-string">"https://i.ytimg.com/vi/..."</span>,
+  <span class="json-key">"description"</span>: <span class="json-string">"Official video..."</span>,
+  <span class="json-key">"uploader"</span>: <span class="json-string">"Rick Astley"</span>,
+  <span class="json-key">"view_count"</span>: <span class="json-number">1500000000</span>,
+  <span class="json-key">"like_count"</span>: <span class="json-number">15000000</span>,
+  <span class="json-key">"upload_date"</span>: <span class="json-string">"20091025"</span>,
+  <span class="json-key">"extractor"</span>: <span class="json-string">"youtube"</span>,
+  <span class="json-key">"extractor_key"</span>: <span class="json-string">"Youtube"</span>,
+  <span class="json-key">"formats"</span>: {
+    <span class="json-key">"combined"</span>: [
+      {
+        <span class="json-key">"format_id"</span>: <span class="json-string">"22"</span>,
+        <span class="json-key">"resolution"</span>: <span class="json-string">"720p"</span>,
+        <span class="json-key">"ext"</span>: <span class="json-string">"mp4"</span>,
+        <span class="json-key">"size_mb"</span>: <span class="json-number">25.3</span>,
+        <span class="json-key">"fps"</span>: <span class="json-number">30</span>,
+        <span class="json-key">"quality"</span>: <span class="json-string">"720p (30fps)"</span>,
+        <span class="json-key">"type"</span>: <span class="json-string">"combined"</span>
+      }
+    ],
+    <span class="json-key">"video"</span>: [...],
+    <span class="json-key">"audio"</span>: [...]
+  },
+  <span class="json-key">"format_count"</span>: <span class="json-number">15</span>,
+  <span class="json-key">"audio_count"</span>: <span class="json-number">3</span>
+}</code></pre>
+
+                <h4>Tester</h4>
+                <div class="try-it">
+                    <input type="text" id="tryInfoUrl" placeholder="https://youtube.com/watch?v=..." value="https://youtube.com/watch?v=dQw4w9WgXcQ" />
+                    <button onclick="tryInfo()">Tester →</button>
+                </div>
+                <div class="try-result" id="tryInfoResult"></div>
+            </div>
+        </div>
+
+        <!-- ====== ENDPOINT: FORMATS ====== -->
+        <div class="endpoint">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <span class="method post">POST</span>
+                <span class="path">/api/v1/formats</span>
+                <span class="endpoint-title">Formats disponibles (léger)</span>
+            </div>
+            <div class="endpoint-body">
+                <p>Version légère de <code>/info</code> — retourne uniquement la liste des formats avec tailles, sans les métadonnées complètes de la vidéo.</p>
+                <h4>Body</h4>
+                <pre><code>{ <span class="json-key">"url"</span>: <span class="json-string">"https://youtube.com/watch?v=..."</span> }</code></pre>
+            </div>
+        </div>
+
+        <!-- ====== ENDPOINT: DOWNLOAD ====== -->
+        <div class="endpoint">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <span class="method post">POST</span>
+                <span class="path">/api/v1/download</span>
+                <span class="endpoint-title">Lancer un téléchargement</span>
+            </div>
+            <div class="endpoint-body">
+                <p>Démarre le téléchargement d'un format spécifique. Retourne un <code>session_id</code> pour suivre la progression.</p>
+                <h4>Body</h4>
+                <pre><code>{
+  <span class="json-key">"url"</span>: <span class="json-string">"https://youtube.com/watch?v=..."</span>,
+  <span class="json-key">"format_id"</span>: <span class="json-string">"22"</span>  <span style="color: var(--text-muted)">// optionnel, utilise "best" si absent</span>
+}</code></pre>
+                <h4>Réponse (200)</h4>
+                <pre><code>{
+  <span class="json-key">"session_id"</span>: <span class="json-string">"a1b2c3d4"</span>,
+  <span class="json-key">"status"</span>: <span class="json-string">"started"</span>,
+  <span class="json-key">"progress_url"</span>: <span class="json-string">"/api/v1/progress/a1b2c3d4"</span>
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ====== ENDPOINT: PROGRESS ====== -->
+        <div class="endpoint">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <span class="method get">GET</span>
+                <span class="path">/api/v1/progress/{session_id}</span>
+                <span class="endpoint-title">Vérifier la progression</span>
+            </div>
+            <div class="endpoint-body">
+                <p>Interrogez cet endpoint pour suivre l'avancement du téléchargement en temps réel.</p>
+                <h4>Réponse (en cours)</h4>
+                <pre><code>{
+  <span class="json-key">"status"</span>: <span class="json-string">"downloading"</span>,
+  <span class="json-key">"progress"</span>: <span class="json-number">45.2</span>,
+  <span class="json-key">"message"</span>: <span class="json-string">"Downloading... 45.2%"</span>,
+  <span class="json-key">"speed"</span>: <span class="json-string">"2.5 MiB/s"</span>,
+  <span class="json-key">"eta"</span>: <span class="json-string">"1:30"</span>,
+  <span class="json-key">"total_mb"</span>: <span class="json-number">25.3</span>,
+  <span class="json-key">"downloaded_mb"</span>: <span class="json-number">11.4</span>
+}</code></pre>
+                <h4>Réponse (terminé)</h4>
+                <pre><code>{
+  <span class="json-key">"status"</span>: <span class="json-string">"completed"</span>,
+  <span class="json-key">"progress"</span>: <span class="json-number">100</span>,
+  <span class="json-key">"filename"</span>: <span class="json-string">"video.mp4"</span>,
+  <span class="json-key">"size_mb"</span>: <span class="json-number">24.8</span>,
+  <span class="json-key">"download_url"</span>: <span class="json-string">"/api/v1/file/a1b2c3d4/video.mp4"</span>
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ====== ENDPOINT: FILE ====== -->
+        <div class="endpoint">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <span class="method get">GET</span>
+                <span class="path">/api/v1/file/{session_id}/{filename}</span>
+                <span class="endpoint-title">Télécharger le fichier</span>
+            </div>
+            <div class="endpoint-body">
+                <p>Télécharge le fichier résultant du téléchargement. Le fichier est servi avec l'en-tête <code>Content-Disposition: attachment</code>.</p>
+            </div>
+        </div>
+
+        <!-- ====== ENDPOINT: SITES ====== -->
+        <div class="endpoint">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <span class="method get">GET</span>
+                <span class="path">/api/v1/sites</span>
+                <span class="endpoint-title">Liste des sites supportés</span>
+            </div>
+            <div class="endpoint-body">
+                <p>Retourne la liste complète des 1000+ sites supportés par l'API.</p>
+                <h4>Réponse</h4>
+                <pre><code>{
+  <span class="json-key">"total"</span>: <span class="json-number">1024</span>,
+  <span class="json-key">"sites"</span>: [<span class="json-string">"YouTube"</span>, <span class="json-string">"TikTok"</span>, <span class="json-string">"Instagram"</span>, ...]
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- ====== ENDPOINT: CLEANUP ====== -->
+        <div class="endpoint">
+            <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                <span class="method post">POST</span>
+                <span class="path">/api/v1/cleanup/{session_id}</span>
+                <span class="endpoint-title">Nettoyer une session</span>
+            </div>
+            <div class="endpoint-body">
+                <p>Supprime les fichiers temporaires d'une session de téléchargement. Appelez cet endpoint après avoir téléchargé le fichier.</p>
+            </div>
+        </div>
+
+        <!-- ====== CODE EXAMPLES ====== -->
+        <div style="margin-top: 48px;">
+            <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 20px;">💻 Exemples de code</h2>
+
+            <h3 style="font-size: 16px; color: var(--text-secondary); margin-bottom: 8px;">cURL — Récupérer les formats</h3>
+            <pre><code>curl -X POST https://tubestream.app/api/v1/info \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"}'</code></pre>
+
+            <h3 style="font-size: 16px; color: var(--text-secondary); margin: 20px 0 8px;">Python — Télécharger une vidéo</h3>
+            <pre><code>import requests
+
+# 1. Récupérer les formats
+res = requests.post("https://tubestream.app/api/v1/info", json={
+    "url": "https://youtube.com/watch?v=dQw4w9WgXcQ"
+})
+info = res.json()
+
+# 2. Lancer le téléchargement
+dl = requests.post("https://tubestream.app/api/v1/download", json={
+    "url": "https://youtube.com/watch?v=dQw4w9WgXcQ",
+    "format_id": info["formats"]["combined"][0]["format_id"]
+})
+session_id = dl.json()["session_id"]
+
+# 3. Suivre la progression
+import time
+while True:
+    progress = requests.get(f"https://tubestream.app/api/v1/progress/{session_id}").json()
+    print(f"{progress['progress']:.1f}% — {progress['message']}")
+    if progress["status"] in ("completed", "error"):
+        break
+    time.sleep(1)
+
+# 4. Télécharger le fichier
+if progress["status"] == "completed":
+    file_url = "https://tubestream.app" + progress["download_url"]
+    r = requests.get(file_url)
+    with open(progress["filename"], "wb") as f:
+        f.write(r.content)
+    print("✅ Fichier téléchargé !")</code></pre>
+
+            <h3 style="font-size: 16px; color: var(--text-secondary); margin: 20px 0 8px;">JavaScript / Fetch — Télécharger</h3>
+            <pre><code>// Récupérer les infos
+const info = await fetch("/api/v1/info", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url: "https://youtube.com/watch?v=..." })
+}).then(r => r.json());
+
+// Télécharger
+const dl = await fetch("/api/v1/download", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+        url: "https://youtube.com/watch?v=...",
+        format_id: info.formats.combined[0].format_id
+    })
+}).then(r => r.json());
+
+// Polling
+const interval = setInterval(async () => {
+    const p = await fetch(`/api/v1/progress/${dl.session_id}`).then(r => r.json());
+    console.log(p.progress + "%");
+    if (p.status === "completed") {
+        clearInterval(interval);
+        window.location.href = p.download_url;
+    }
+}, 500);</code></pre>
+        </div>
+
+        <!-- Error codes table -->
+        <div style="margin-top: 48px;">
+            <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 16px;">🔴 Codes d'erreur</h2>
+            <table>
+                <thead>
+                    <tr><th>Code</th><th>Signification</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><span class="status-ok">200</span></td><td>OK</td><td>Requête réussie</td></tr>
+                    <tr><td><span class="status-err">400</span></td><td>Bad Request</td><td>URL manquante ou invalide</td></tr>
+                    <tr><td><span class="status-err">404</span></td><td>Not Found</td><td>Session ou fichier introuvable</td></tr>
+                    <tr><td><span class="status-err">422</span></td><td>Unprocessable</td><td>URL valide mais contenu inaccessible</td></tr>
+                    <tr><td><span class="status-err">500</span></td><td>Server Error</td><td>Erreur interne du serveur</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function toggleEndpoint(header) {
+            const body = header.nextElementSibling;
+            body.classList.toggle('open');
+        }
+
+        async function tryInfo() {
+            const url = document.getElementById('tryInfoUrl').value.trim();
+            const result = document.getElementById('tryInfoResult');
+
+            if (!url) {
+                result.innerHTML = '<p style="color: var(--red);">Veuillez entrer une URL</p>';
+                return;
+            }
+
+            result.innerHTML = '<p style="color: var(--text-muted);">⏳ Envoi de la requête...</p>';
+
+            try {
+                const res = await fetch('/api/v1/info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url }),
+                });
+
+                const data = await res.json();
+
+                if (data.error) {
+                    result.innerHTML = `<pre style="color: var(--red);">Erreur: ${data.error}</pre>`;
+                    return;
+                }
+
+                const fmts = data.formats || {};
+                const combined = fmts.combined || [];
+                const video = fmts.video || [];
+                const audio = fmts.audio || [];
+
+                let html = `<pre style="color: var(--green);">✅ Titre: ${data.title}\n📺 Site: ${data.extractor_key}\n⏱ Durée: ${data.duration_formatted}\n🎬 Formats combinés: ${combined.length}\n🎥 Formats vidéo: ${video.length}\n🎵 Formats audio: ${audio.length}\n\n`;
+
+                if (combined.length > 0) {
+                    html += '--- Formats Combinés (Vidéo + Audio) ---\n';
+                    combined.slice(0, 10).forEach(f => {
+                        html += `  ${f.resolution} ${f.ext} — ${f.size_mb ? f.size_mb + ' Mo' : 'taille inconnue'}\n`;
+                    });
+                }
+                if (video.length > 0) {
+                    html += '\n--- Formats Vidéo seuls ---\n';
+                    video.slice(0, 5).forEach(f => {
+                        html += `  ${f.resolution} ${f.ext} — ${f.size_mb ? f.size_mb + ' Mo' : 'taille inconnue'}\n`;
+                    });
+                }
+                if (audio.length > 0) {
+                    html += '\n--- Formats Audio seuls ---\n';
+                    audio.slice(0, 5).forEach(f => {
+                        html += `  ${f.quality} — ${f.size_mb ? f.size_mb + ' Mo' : 'taille inconnue'}\n`;
+                    });
+                }
+
+                html += '</pre>';
+                result.innerHTML = html;
+
+            } catch (err) {
+                result.innerHTML = `<pre style="color: var(--red);">Erreur réseau: ${err.message}</pre>`;
+            }
+        }
+
+        // Set base URL dynamically
+        document.getElementById('baseUrl').textContent = window.location.origin + '/api/v1';
+    </script>
+</body>
+</html>
