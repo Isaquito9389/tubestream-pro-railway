@@ -456,9 +456,9 @@ class Downloader:
         opts['socket_timeout'] = 30
 
         if format_id:
-            opts['format'] = format_id
+            opts['format'] = f'{format_id}/bestvideo+bestaudio/best'
         else:
-            opts['format'] = 'bestvideo+bestaudio/best'
+            opts['format'] = 'bestvideo+bestaudio/best/bestvideo/bestaudio/b'
 
         if options:
             opts.update(options)
