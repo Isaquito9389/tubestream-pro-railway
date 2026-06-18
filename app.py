@@ -25,6 +25,14 @@ from flask import (
 from werkzeug.utils import secure_filename
 from downloader import Downloader
 
+# Admin token for sensitive endpoints (cookies upload, etc.)
+# Set via Railway env var ADMIN_TOKEN. If unset, /api/v1/cookies is disabled.
+ADMIN_TOKEN = os.environ.get('ADMIN_TOKEN', '')
+# File path where uploaded cookies will be stored (persisted on Railway volume
+# or locally). downloader.py reads this same path via env var COOKIES_FILE.
+COOKIES_STORAGE_PATH = os.environ.get('COOKIES_FILE', '/app/cookies.txt')
+os.environ['COOKIES_FILE'] = COOKIES_STORAGE_PATH  # ensure downloader sees it
+
 # ============================================================
 # Configuration
 # ============================================================
@@ -533,13 +541,92 @@ def api_thumbnail():
 @app.route('/health')
 def health():
     """Endpoint de vérification de santé."""
+    cookies_file = os.environ.get('COOKIES_FILE', '')
     return jsonify({
         'status': 'ok',
         'version': '2.0.0',
         'sites_supported': ALL_SITES_COUNT,
         'active_sessions': len(active_downloads),
         'uptime': 'running',
+        'cookies_configured': bool(cookies_file and os.path.exists(cookies_file)),
+        'admin_endpoints_enabled': bool(ADMIN_TOKEN),
     })
+
+
+# ============================================================
+# Admin endpoints (cookies management)
+# ============================================================
+
+@app.route('/api/v1/cookies/status', methods=['GET'])
+def cookies_status():
+    """Vérifie si un fichier cookies est configuré. Pas d'auth requise."""
+    cookies_file = os.environ.get('COOKIES_FILE', '')
+    return jsonify({
+        'configured': bool(cookies_file and os.path.exists(cookies_file)),
+        'path': cookies_file if cookies_file else None,
+        'size_bytes': os.path.getsize(cookies_file) if cookies_file and os.path.exists(cookies_file) else 0,
+    })
+
+
+@app.route('/api/v1/cookies', methods=['POST'])
+def cookies_upload():
+    """
+    Uploade un fichier cookies (format Netscape / yt-dlp).
+    Protégé par le header `X-Admin-Token: <ADMIN_TOKEN>`.
+
+    Le format attendu est le format "Netscape cookies.txt" — c'est ce
+    que produisent les extensions "Get cookies.txt" (Chrome/Firefox).
+    """
+    if not ADMIN_TOKEN:
+        return jsonify({
+            'error': 'Admin endpoints disabled. Set ADMIN_TOKEN env var to enable.',
+            'code': 403,
+        }), 403
+
+    token = request.headers.get('X-Admin-Token', '')
+    if token != ADMIN_TOKEN:
+        return jsonify({'error': 'Invalid admin token', 'code': 401}), 401
+
+    if 'file' not in request.files:
+        # Also accept raw text body
+        text = request.get_data(as_text=True)
+        if not text:
+            return jsonify({'error': 'No cookies file provided', 'code': 400}), 400
+        try:
+            with open(COOKIES_STORAGE_PATH, 'w', encoding='utf-8') as f:
+                f.write(text)
+        except Exception as e:
+            return jsonify({'error': f'Failed to save cookies: {str(e)}', 'code': 500}), 500
+    else:
+        file = request.files['file']
+        try:
+            file.save(COOKIES_STORAGE_PATH)
+        except Exception as e:
+            return jsonify({'error': f'Failed to save cookies: {str(e)}', 'code': 500}), 500
+
+    # Verify file exists
+    size = os.path.getsize(COOKIES_STORAGE_PATH) if os.path.exists(COOKIES_STORAGE_PATH) else 0
+    return jsonify({
+        'status': 'saved',
+        'path': COOKIES_STORAGE_PATH,
+        'size_bytes': size,
+    })
+
+
+@app.route('/api/v1/cookies', methods=['DELETE'])
+def cookies_delete():
+    """Supprime le fichier cookies. Protégé par X-Admin-Token."""
+    if not ADMIN_TOKEN:
+        return jsonify({'error': 'Admin endpoints disabled.', 'code': 403}), 403
+
+    token = request.headers.get('X-Admin-Token', '')
+    if token != ADMIN_TOKEN:
+        return jsonify({'error': 'Invalid admin token', 'code': 401}), 401
+
+    if os.path.exists(COOKIES_STORAGE_PATH):
+        os.remove(COOKIES_STORAGE_PATH)
+        return jsonify({'status': 'deleted'})
+    return jsonify({'status': 'no file to delete'})
 
 
 # ============================================================

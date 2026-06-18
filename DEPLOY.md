@@ -62,6 +62,46 @@ Variables importantes (Railway → Variables) :
 |----------|--------|-------------|
 | `SECRET_KEY` | une chaîne aléatoire | À définir en production |
 | `SITE_URL` | `https://<ton-domaine>.up.railway.app` | Pour le SEO/sitemap |
+| `ADMIN_TOKEN` | (optionnel) un secret long aléatoire | Active les endpoints admin `/api/v1/cookies` |
+| `COOKIES_FILE` | (optionnel) `/app/cookies.txt` | Chemin où stocker le cookies.txt uploadé |
+
+## 🍪 Cookies YouTube (optionnel, pour contenus bloqués)
+
+Quand YouTube détecte une IP de datacenter (Railway), il peut exiger
+une authentification. Le downloader essaie en premier les clients
+`android → ios → tv_embedded → web` qui contournent la plupart des
+murs d'auth. Pour les vidéos vraiment bloquées, tu peux uploader un
+fichier cookies (format Netscape) :
+
+1. **Sur ton navigateur** : installe l'extension "Get cookies.txt"
+   (Chrome/Firefox), va sur youtube.com connecté, exporte les cookies.
+2. **Active `ADMIN_TOKEN`** dans Railway → Variables (mets une valeur
+   secrète longue et aléatoire).
+3. **Upload via API** :
+
+```bash
+curl -X POST https://<ton-app>.up.railway.app/api/v1/cookies \
+  -H "X-Admin-Token: <ton-admin-token>" \
+  -F "file=@youtube_cookies.txt"
+```
+
+4. **Vérifie le statut** :
+
+```bash
+curl https://<ton-app>.up.railway.app/api/v1/cookies/status
+# → {"configured": true, "size_bytes": 1234, ...}
+```
+
+5. **Pour supprimer** :
+
+```bash
+curl -X DELETE https://<ton-app>.up.railway.app/api/v1/cookies \
+  -H "X-Admin-Token: <ton-admin-token>"
+```
+
+⚠️ **Note** : sur Railway sans volume persistant, le cookies.txt est
+perdu à chaque redéploiement. Pour le rendre persistant, monte un
+volume Railway et change `COOKIES_FILE` pour pointer vers ce volume.
 
 Si tu rencontres `'$PORT' is not a valid port number` :
 1. Vérifie qu'il n'y a pas de `Procfile` à la racine.
