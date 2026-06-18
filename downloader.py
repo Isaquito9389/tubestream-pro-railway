@@ -15,6 +15,7 @@ Anti-authentication strategies (free, no user action required) :
 """
 
 import os
+import shutil
 import yt_dlp
 
 
@@ -171,6 +172,7 @@ class Downloader:
             'geo_bypass_country': 'US',
             # Realistic browser headers
             'http_headers': DEFAULT_HTTP_HEADERS,
+            'ffmpeg_location': shutil.which('ffmpeg') or '/usr/bin/ffmpeg',
             # Don't try to use a player JS that requires sign-in
             'extractor_args': {},
         }
@@ -458,7 +460,7 @@ class Downloader:
         if format_id:
             opts['format'] = f'{format_id}/bestvideo+bestaudio/best'
         else:
-            opts['format'] = 'bestvideo+bestaudio/best/bestvideo/bestaudio/b'
+            opts['format'] = 'bestvideo+bestaudio/best/18'
 
         if options:
             opts.update(options)
