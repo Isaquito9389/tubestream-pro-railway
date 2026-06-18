@@ -15,8 +15,8 @@ if project_home not in sys.path:
 os.environ['DOWNLOAD_DIR'] = '/home/[your-username]/downloads'
 os.environ['FLASK_DEBUG'] = 'false'
 
-# Import Flask app
-from web_app import app as application
+# Import Flask app (module `app`, variable `app` dans app.py)
+from app import app as application
 
 # Ensure required directories exist
 os.makedirs(os.path.join(project_home, 'templates'), exist_ok=True)

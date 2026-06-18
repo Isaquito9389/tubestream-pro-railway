@@ -6,13 +6,14 @@
 
 ```
 tubestream/
-├── web_app.py              ← Serveur Flask principal (SEO + API REST)
+├── app.py                  ← Serveur Flask principal (SEO + API REST)
 ├── downloader.py           ← Moteur de téléchargement (yt-dlp)
 ├── config.py               ← Configuration
 ├── requirements.txt        ← Dépendances Python
-├── Procfile                ← Railway
-├── Dockerfile              ← Railway / Render
-├── nixpacks.toml           ← Render (ffmpeg)
+├── start.sh                ← Script de démarrage (résout $PORT à runtime)
+├── Dockerfile              ← Railway (builder principal) / Render
+├── railway.json            ← Configuration Railway explicite
+├── nixpacks.toml           ← Fallback Nixpacks (Render / Railway sans Dockerfile)
 ├── pythonanywhere_wsgi.py  ← PythonAnywhere
 ├── .gitignore
 ├── templates/
@@ -23,6 +24,12 @@ tubestream/
 ├── static/                 ← Ressources statiques (si besoin)
 └── downloads/              ← Fichiers temporaires (git-ignored)
 ```
+
+> **Note importante** : il n'y a PAS de `Procfile`. Railway scanne
+> statiquement le Procfile pour extraire le port, et ne sait pas
+> interpréter les variables d'environnement — d'où l'erreur
+> `'$PORT' is not a valid port number`. La résolution du port se fait
+> dans `start.sh`, exécuté par le shell à runtime.
 
 ## 🟢 Option 1 : Railway (Recommandé)
 
@@ -43,8 +50,23 @@ railway link
 railway up
 ```
 
-Railway détecte automatiquement le `Dockerfile` et `Procfile`.
-Variables d'environnement configurées dans `Dockerfile`.
+Railway détecte automatiquement le `Dockerfile` et exécute `start.sh`
+qui résout la variable `PORT` injectée par Railway au démarrage du conteneur.
+
+**NE PAS définir de variable `PORT` dans Railway** — elle est injectée
+automatiquement par la plateforme.
+
+Variables importantes (Railway → Variables) :
+
+| Variable | Valeur | Commentaire |
+|----------|--------|-------------|
+| `SECRET_KEY` | une chaîne aléatoire | À définir en production |
+| `SITE_URL` | `https://<ton-domaine>.up.railway.app` | Pour le SEO/sitemap |
+
+Si tu rencontres `'$PORT' is not a valid port number` :
+1. Vérifie qu'il n'y a pas de `Procfile` à la racine.
+2. Vérifie que `Dockerfile` ne contient pas `EXPOSE $PORT`.
+3. Vérifie que `railway.json` ne contient pas `startCommand` avec `$PORT`.
 
 ## 🔴 Option 2 : Render
 
@@ -52,7 +74,7 @@ Variables d'environnement configurées dans `Dockerfile`.
 # 1. Créer un "Web Service" sur render.com
 # 2. Connecter le repo GitHub
 # 3. Build Command: pip install -r requirements.txt
-# 4. Start Command: gunicorn web_app:app --bind 0.0.0.0:$PORT --timeout 300 --workers 4
+# 4. Start Command: gunicorn app:app --bind 0.0.0.0:$PORT --timeout 300 --workers 4
 
 # OU utiliser nixpacks (automatique si fichier nixpacks.toml présent)
 ```
@@ -76,7 +98,7 @@ Variables d'environnement configurées dans `Dockerfile`.
 pip install -r requirements.txt
 
 # 2. Lancer
-python web_app.py
+python app.py
 
 # 3. Ouvrir http://localhost:5000
 # 4. API Docs: http://localhost:5000/api

@@ -1,11 +1,16 @@
+# ============================================================
+# Nixpacks (utilisé par Render et fallback Railway sans Dockerfile)
+# Module Flask : `app` (fichier app.py)
+# On délègue aussi à start.sh pour éviter que nixpacks ne voie $PORT.
+# ============================================================
 [phases.setup]
-nixPkgs = ["python311" "ffmpeg" "glibcLocales"]
+nixPkgs = ["python311", "ffmpeg", "glibcLocales"]
 
 [phases.install]
 cmds = ["pip install -r requirements.txt"]
 
 [phases.build]
-cmds = []
+cmds = ["chmod +x /app/start.sh"]
 
 [start]
-cmd = "gunicorn web_app:app --bind 0.0.0.0:$PORT --timeout 300 --workers 4 --threads 2"
+cmd = "/app/start.sh"

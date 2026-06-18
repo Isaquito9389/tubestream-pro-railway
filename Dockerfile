@@ -1,39 +1,43 @@
 # ============================================================
 # TubeStream Pro — Dockerfile pour Railway / Render
 # ============================================================
+# Stratégie anti-erreur "invalid port number" sur Railway :
+#   - Pas de Procfile (Railway le scanne statiquement).
+#   - Pas de variable dans EXPOSE (utiliser un nombre littéral).
+#   - Pas de variable dans la ligne CMD (Railway peut aussi la scanner).
+#   - Toute la logique de résolution du port est cachée dans
+#     /app/start.sh, exécutée par le shell à runtime.
+# ============================================================
 FROM python:3.11-slim
 
-# Install system dependencies + ffmpeg for audio extraction
+# System dependencies + ffmpeg for audio extraction
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ffmpeg && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install Python dependencies
+# Install Python dependencies first (better Docker layer caching)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy application code + startup script
 COPY . .
 
-# Create directories
-RUN mkdir -p templates downloads
+# Make startup script executable
+RUN chmod +x /app/start.sh
 
-# Set environment variables
-ENV PORT=5000
-ENV DOWNLOAD_DIR=/app/downloads
-ENV FLASK_DEBUG=false
+# Create required directories
+RUN mkdir -p templates downloads static
 
-# Expose port
-EXPOSE $PORT
+# Runtime env (port is injected by Railway at runtime — do NOT hardcode it)
+ENV DOWNLOAD_DIR=/app/downloads \
+    FLASK_DEBUG=false \
+    PYTHONUNBUFFERED=1
 
-# Run application
-CMD gunicorn web_app:app \
-    --bind 0.0.0.0:$PORT \
-    --timeout 300 \
-    --workers 4 \
-    --threads 2 \
-    --keep-alive 120 \
-    --access-logfile - \
-    --error-logfile -
+# Document the listening port (literal number — Railway ignores EXPOSE
+# for routing, but a number avoids the "invalid port number" scan error)
+EXPOSE 5000
+
+# Run via startup script — port resolution happens inside the shell
+CMD ["/app/start.sh"]

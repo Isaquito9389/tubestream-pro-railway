@@ -34,7 +34,7 @@ cd tubestream
 pip install -r requirements.txt
 
 # Lancer le serveur
-python web_app.py
+python app.py
 ```
 
 ### Utilisation
@@ -94,7 +94,7 @@ print(progress.json())
 
 ```
 tubestream/
-├── web_app.py              # Serveur Flask principal
+├── app.py                 # Serveur Flask principal
 ├── downloader.py           # Moteur de téléchargement (yt-dlp)
 ├── config.py               # Configuration
 ├── requirements.txt        # Dépendances Python
