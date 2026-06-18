@@ -66,7 +66,7 @@ def _youtube_extractor_args(client):
 
 
 # Order matters: try clients most likely to bypass auth first
-YOUTUBE_CLIENT_STRATEGIES = ['android', 'ios', 'tv_embedded', 'web']
+YOUTUBE_CLIENT_STRATEGIES = ['tv_embedded', 'mediaconnect', 'web_creator', 'web']
 
 
 class Downloader:
