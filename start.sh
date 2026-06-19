@@ -19,6 +19,12 @@ set -e
 PORT="${PORT:-5000}"
 
 echo "==> TubeStream Pro démarrage sur le port $PORT"
+if [ -n "$COOKIES_B64" ]; then
+  echo "$COOKIES_B64" | base64 -d > /app/cookies.txt
+  export COOKIES_FILE=/app/cookies.txt
+  echo "==> Cookies YouTube chargés"
+fi
+
 exec gunicorn app:app \
     --bind "0.0.0.0:${PORT}" \
     --timeout 300 \
