@@ -59,9 +59,6 @@ def _youtube_extractor_args(client):
             # Skip webpage/configs fetch for speed; let yt-dlp use the
             # player response directly from the client API.
             'player_skip': ['configs'],
-            # Sometimes YouTube returns "Sign in to confirm you're not a bot"
-            # because of missing PO token. Skip that check.
-            'skip': ['hls', 'dash'],
         }
     }
 
@@ -206,6 +203,7 @@ class Downloader:
         """
         last_error = None
         tried_clients = []
+        best_result = None
 
         # For YouTube, try each client strategy in order
         if self._is_youtube(url):
@@ -217,11 +215,25 @@ class Downloader:
                         info = ydl.extract_info(url, download=False)
                     if info:
                         result = self._build_info_response(url, info)
+                        max_height = max(
+                            [v.get('height') or 0 for v in result.get('formats', {}).get('video', [])]
+                            + [c.get('height') or 0 for c in result.get('formats', {}).get('combined', [])]
+                            or [0]
+                        )
                         result['meta'] = {
                             'client_used': client,
                             'clients_tried': tried_clients,
+                            'max_height': max_height,
                         }
-                        return result
+                        # Accept immediately once we reach a decent quality
+                        # (>=480p). Otherwise keep it as a fallback and try
+                        # the next client for a chance at higher quality.
+                        is_last_client = client == YOUTUBE_CLIENT_STRATEGIES[-1]
+                        if max_height >= 480 or is_last_client:
+                            return result if max_height >= (best_result['meta']['max_height'] if best_result else 0) else best_result
+                        if not best_result or max_height > best_result['meta']['max_height']:
+                            best_result = result
+                        continue
                 except yt_dlp.utils.DownloadError as e:
                     last_error = str(e)
                     # If it's NOT an auth error, no point trying other clients
@@ -232,6 +244,9 @@ class Downloader:
                 except Exception as e:
                     last_error = str(e)
                     break
+
+            if best_result:
+                return best_result
 
             # All strategies failed
             return {
