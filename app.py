@@ -56,7 +56,7 @@ os.makedirs('static', exist_ok=True)
 SITE_NAME = 'TubeStream Pro'
 SITE_URL = os.environ.get('SITE_URL', 'https://tubestream.app')
 SITE_DESCRIPTION = 'Téléchargez gratuitement des vidéos et audio depuis YouTube, TikTok, Instagram, Twitter, Facebook et 1000+ sites. MP4, MP3, HD, 4K, 8K. Rapide et sans inscription.'
-SITE_KEYWORDS = 'télécharger vidéo youtube, télécharger tiktok, downloader instagram, twitter video download, vimeo download, dailymotion, convertisseur vidéo, mp4, mp3, 1080p, 4K, 8K, gratuit, sans inscription'
+SITE_KEYWORDS = 'télécharger vidéo youtube, télécharger tiktok, downloader instagram, twitter video download, vimeo download, dailymotion, convertisseur vidéo, mp4, mp3, 1080p, 4K, 8K, gratu[...]
 
 # Session de téléchargement active
 active_downloads = {}
@@ -513,6 +513,21 @@ def api_v1_sites():
         'popular': [{'name': s['name'], 'url': s['url'], 'emoji': s['emoji']} for s in POPULAR_SITES],
         'all': all_sites,
     })
+
+
+@app.route('/api/v1/debug', methods=['POST'])
+def api_v1_debug():
+    """DEBUG TEMPORAIRE — à retirer une fois le diagnostic terminé."""
+    data = request.get_json() or {}
+    url = data.get('url', '').strip()
+    client = data.get('client', 'web').strip()
+
+    if not url:
+        return jsonify({'error': 'URL est requise', 'code': 400}), 400
+
+    dl = get_downloader('debug-temp')
+    result = dl.debug_info(url, client=client)
+    return jsonify(result)
 
 
 # ============================================================
