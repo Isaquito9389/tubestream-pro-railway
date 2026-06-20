@@ -19,6 +19,7 @@ set -e
 PORT="${PORT:-5000}"
 
 echo "==> TubeStream Pro démarrage sur le port $PORT"
+which deno && deno --version || echo "DENO INTROUVABLE"
 if [ -n "$COOKIES_B64" ]; then
   echo "$COOKIES_B64" | base64 -d > /app/cookies.txt
   export COOKIES_FILE=/app/cookies.txt
