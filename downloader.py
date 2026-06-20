@@ -19,6 +19,25 @@ import shutil
 import yt_dlp
 
 
+class _CaptureLogger:
+    """Capture yt-dlp debug/warning/error messages in memory for debugging."""
+
+    def __init__(self):
+        self.messages = []
+
+    def debug(self, msg):
+        self.messages.append(f"[debug] {msg}")
+
+    def info(self, msg):
+        self.messages.append(f"[info] {msg}")
+
+    def warning(self, msg):
+        self.messages.append(f"[warning] {msg}")
+
+    def error(self, msg):
+        self.messages.append(f"[error] {msg}")
+
+
 # ============================================================
 # Anti-bot / anti-auth configuration
 # ============================================================
@@ -65,29 +84,6 @@ def _youtube_extractor_args(client):
 
 # Order matters: try clients most likely to bypass auth first
 YOUTUBE_CLIENT_STRATEGIES = ['web', 'android', 'tv_embedded', 'web_creator']
-
-
-# ============================================================
-# Debug Logger
-# ============================================================
-
-class _CaptureLogger:
-    """Capture yt-dlp debug/warning/error messages in memory for debugging."""
-
-    def __init__(self):
-        self.messages = []
-
-    def debug(self, msg):
-        self.messages.append(f"[debug] {msg}")
-
-    def info(self, msg):
-        self.messages.append(f"[info] {msg}")
-
-    def warning(self, msg):
-        self.messages.append(f"[warning] {msg}")
-
-    def error(self, msg):
-        self.messages.append(f"[error] {msg}")
 
 
 class Downloader:
@@ -219,6 +215,33 @@ class Downloader:
     # ------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------
+
+    def debug_info(self, url, client='web'):
+        """
+        DEBUG ONLY: run a single extraction with full verbose logging
+        captured, to diagnose why certain formats are missing in
+        production (e.g. Railway) vs local testing.
+        """
+        logger = _CaptureLogger()
+        opts = self._opts_for(url, client=client, debug_logger=logger)
+        result = {'client': client, 'messages': [], 'error': None, 'max_height': None}
+        try:
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+            if info:
+                built = self._build_info_response(url, info)
+                heights = (
+                    [v.get('height') or 0 for v in built.get('formats', {}).get('video', [])]
+                    + [c.get('height') or 0 for c in built.get('formats', {}).get('combined', [])]
+                )
+                result['max_height'] = max(heights) if heights else 0
+                result['format_ids'] = [
+                    f.get('format_id') for f in info.get('formats', [])
+                ]
+        except Exception as e:
+            result['error'] = str(e)
+        result['messages'] = logger.messages
+        return result
 
     def get_info(self, url):
         """
@@ -459,27 +482,6 @@ class Downloader:
             'format_count': len(video_formats) + len(combined_unique),
             'audio_count': len(audio_formats),
         }
-
-    def debug_info(self, url, client='web'):
-        """DEBUG ONLY: run a single extraction with full verbose logging."""
-        logger = _CaptureLogger()
-        opts = self._opts_for(url, client=client, debug_logger=logger)
-        result = {'client': client, 'messages': [], 'error': None, 'max_height': None}
-        try:
-            with yt_dlp.YoutubeDL(opts) as ydl:
-                info = ydl.extract_info(url, download=False)
-            if info:
-                built = self._build_info_response(url, info)
-                heights = (
-                    [v.get('height') or 0 for v in built.get('formats', {}).get('video', [])]
-                    + [c.get('height') or 0 for c in built.get('formats', {}).get('combined', [])]
-                )
-                result['max_height'] = max(heights) if heights else 0
-                result['format_ids'] = [f.get('format_id') for f in info.get('formats', [])]
-        except Exception as e:
-            result['error'] = str(e)
-        result['messages'] = logger.messages
-        return result
 
     def download(self, url, format_id=None, options=None, progress_callback=None):
         """Download with specific format ID. Tries multiple YouTube clients."""

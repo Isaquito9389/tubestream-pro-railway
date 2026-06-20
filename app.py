@@ -56,7 +56,7 @@ os.makedirs('static', exist_ok=True)
 SITE_NAME = 'TubeStream Pro'
 SITE_URL = os.environ.get('SITE_URL', 'https://tubestream.app')
 SITE_DESCRIPTION = 'Téléchargez gratuitement des vidéos et audio depuis YouTube, TikTok, Instagram, Twitter, Facebook et 1000+ sites. MP4, MP3, HD, 4K, 8K. Rapide et sans inscription.'
-SITE_KEYWORDS = 'télécharger vidéo youtube, télécharger tiktok, downloader instagram, twitter video download, vimeo download, dailymotion, convertisseur vidéo, mp4, mp3, 1080p, 4K, 8K, gratu[...]
+SITE_KEYWORDS = 'télécharger vidéo youtube, télécharger tiktok, downloader instagram, twitter video download, vimeo download, dailymotion, convertisseur vidéo, mp4, mp3, 1080p, 4K, 8K, gratuit, sans inscription'
 
 # Session de téléchargement active
 active_downloads = {}
@@ -304,6 +304,33 @@ def api_v1_info():
     return jsonify(info)
 
 
+@app.route('/api/v1/debug', methods=['POST'])
+def api_v1_debug():
+    """
+    DEBUG TEMPORAIRE — à retirer une fois le diagnostic terminé.
+
+    Lance une extraction verbose pour un client donné et retourne
+    tous les messages yt-dlp (warnings, debug, erreurs) capturés.
+    Sert à comprendre pourquoi Railway ne récupère que le 360p
+    alors que les tests locaux donnent accès au 1080p.
+
+    Requête:
+        {"url": "https://youtube.com/watch?v=...", "client": "web"}
+        (client est optionnel, défaut "web". Valeurs possibles :
+         web, android, tv_embedded, web_creator)
+    """
+    data = request.get_json() or {}
+    url = data.get('url', '').strip()
+    client = data.get('client', 'web').strip()
+
+    if not url:
+        return jsonify({'error': 'URL est requise', 'code': 400}), 400
+
+    dl = get_downloader('debug-temp')
+    result = dl.debug_info(url, client=client)
+    return jsonify(result)
+
+
 @app.route('/api/v1/formats', methods=['POST'])
 def api_v1_formats():
     """
@@ -513,21 +540,6 @@ def api_v1_sites():
         'popular': [{'name': s['name'], 'url': s['url'], 'emoji': s['emoji']} for s in POPULAR_SITES],
         'all': all_sites,
     })
-
-
-@app.route('/api/v1/debug', methods=['POST'])
-def api_v1_debug():
-    """DEBUG TEMPORAIRE — à retirer une fois le diagnostic terminé."""
-    data = request.get_json() or {}
-    url = data.get('url', '').strip()
-    client = data.get('client', 'web').strip()
-
-    if not url:
-        return jsonify({'error': 'URL est requise', 'code': 400}), 400
-
-    dl = get_downloader('debug-temp')
-    result = dl.debug_info(url, client=client)
-    return jsonify(result)
 
 
 # ============================================================
