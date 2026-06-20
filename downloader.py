@@ -67,6 +67,29 @@ def _youtube_extractor_args(client):
 YOUTUBE_CLIENT_STRATEGIES = ['web', 'android', 'tv_embedded', 'web_creator']
 
 
+# ============================================================
+# Debug Logger
+# ============================================================
+
+class _CaptureLogger:
+    """Capture yt-dlp debug/warning/error messages in memory for debugging."""
+
+    def __init__(self):
+        self.messages = []
+
+    def debug(self, msg):
+        self.messages.append(f"[debug] {msg}")
+
+    def info(self, msg):
+        self.messages.append(f"[info] {msg}")
+
+    def warning(self, msg):
+        self.messages.append(f"[warning] {msg}")
+
+    def error(self, msg):
+        self.messages.append(f"[error] {msg}")
+
+
 class Downloader:
     def __init__(self, download_path='downloads'):
         self.download_path = download_path
@@ -155,7 +178,7 @@ class Downloader:
             return 'Erreur réseau — réessayez'
         return error_msg
 
-    def _base_opts(self):
+    def _base_opts(self, debug_logger=None):
         """Base yt-dlp options applied to every extraction/download."""
         opts = {
             'quiet': True,
@@ -174,15 +197,20 @@ class Downloader:
             # Don't try to use a player JS that requires sign-in
             'extractor_args': {},
         }
+        if debug_logger is not None:
+            opts['quiet'] = False
+            opts['no_warnings'] = False
+            opts['logger'] = debug_logger
+            opts['verbose'] = True
         # Optional cookies file (admin-set)
         cookies_file = _get_cookies_file()
         if cookies_file and os.path.exists(cookies_file):
             opts['cookiefile'] = cookies_file
         return opts
 
-    def _opts_for(self, url, client=None):
+    def _opts_for(self, url, client=None, debug_logger=None):
         """Build opts adapted to the URL (with YouTube client strategy)."""
-        opts = self._base_opts()
+        opts = self._base_opts(debug_logger=debug_logger)
         if self._is_youtube(url):
             client = client or YOUTUBE_CLIENT_STRATEGIES[0]
             opts['extractor_args'] = _youtube_extractor_args(client)
@@ -431,6 +459,27 @@ class Downloader:
             'format_count': len(video_formats) + len(combined_unique),
             'audio_count': len(audio_formats),
         }
+
+    def debug_info(self, url, client='web'):
+        """DEBUG ONLY: run a single extraction with full verbose logging."""
+        logger = _CaptureLogger()
+        opts = self._opts_for(url, client=client, debug_logger=logger)
+        result = {'client': client, 'messages': [], 'error': None, 'max_height': None}
+        try:
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+            if info:
+                built = self._build_info_response(url, info)
+                heights = (
+                    [v.get('height') or 0 for v in built.get('formats', {}).get('video', [])]
+                    + [c.get('height') or 0 for c in built.get('formats', {}).get('combined', [])]
+                )
+                result['max_height'] = max(heights) if heights else 0
+                result['format_ids'] = [f.get('format_id') for f in info.get('formats', [])]
+        except Exception as e:
+            result['error'] = str(e)
+        result['messages'] = logger.messages
+        return result
 
     def download(self, url, format_id=None, options=None, progress_callback=None):
         """Download with specific format ID. Tries multiple YouTube clients."""
