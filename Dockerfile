@@ -13,7 +13,12 @@ FROM python:3.11-slim
 # System dependencies + ffmpeg for audio extraction
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ffmpeg && \
+    apt-get install -y --no-install-recommends curl unzip && \
     rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://deno.land/install.sh | sh && \
+    mv /root/.deno/bin/deno /usr/local/bin/deno
+ENV PATH="/usr/local/bin:${PATH}"
 
 WORKDIR /app
 

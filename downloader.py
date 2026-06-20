@@ -67,7 +67,7 @@ def _youtube_extractor_args(client):
 
 
 # Order matters: try clients most likely to bypass auth first
-YOUTUBE_CLIENT_STRATEGIES = ['tv_embedded', 'mediaconnect', 'web_creator', 'web']
+YOUTUBE_CLIENT_STRATEGIES = ['web', 'android', 'tv_embedded', 'web_creator']
 
 
 class Downloader:
@@ -173,6 +173,7 @@ class Downloader:
             # Realistic browser headers
             'http_headers': DEFAULT_HTTP_HEADERS,
             'ffmpeg_location': shutil.which('ffmpeg') or '/usr/bin/ffmpeg',
+            'remote_components': ['ejs:github'],
             # Don't try to use a player JS that requires sign-in
             'extractor_args': {},
         }
@@ -458,9 +459,9 @@ class Downloader:
         opts['socket_timeout'] = 30
 
         if format_id:
-            opts['format'] = f'{format_id}/bestvideo+bestaudio/best'
+            opts['format'] = f'{format_id}/bv*[height<=1080]+ba/bv*[height<=720]+ba/bv*[height<=480]+ba/b/18'
         else:
-            opts['format'] = 'bestvideo+bestaudio/best/18'
+            opts['format'] = 'bv*[height<=1080]+ba/bv*[height<=720]+ba/bv*[height<=480]+ba/b/18'
 
         if options:
             opts.update(options)
